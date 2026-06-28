@@ -1,0 +1,502 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.panel{display:flex;height:780px;background:var(--surface-0);border:0.5px solid var(--border);border-radius:12px;overflow:hidden}
+.sidebar{width:230px;background:var(--surface-1);border-right:0.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sb-top{padding:1rem;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sb-top h2{font-size:12px;font-weight:500;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase}
+.lang-sel{display:flex;gap:3px}
+.lang-btn{padding:3px 7px;font-size:11px;border:0.5px solid var(--border);border-radius:var(--radius);background:transparent;color:var(--text-muted);cursor:pointer}
+.lang-btn.active{background:var(--bg-accent);color:var(--text-accent);border-color:var(--border-accent);font-weight:500}
+.search-wrap{padding:.75rem 1rem;border-bottom:0.5px solid var(--border)}
+.search-wrap input{width:100%;padding:6px 10px;font-size:12px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--surface-2);color:var(--text-primary)}
+.patient-list{flex:1;overflow-y:auto}
+.pm{display:flex;align-items:center;gap:10px;padding:.75rem 1rem;cursor:pointer;border-bottom:0.5px solid var(--border)}
+.pm:hover{background:var(--surface-2)}
+.pm.active{background:var(--surface-2)}
+.av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0}
+.pm-info p{font-size:13px;font-weight:500;color:var(--text-primary);line-height:1.2}
+.pm-info span{font-size:11px;color:var(--text-muted)}
+.new-btn{margin:.75rem;padding:7px;background:var(--fill-accent);color:var(--on-accent);border:none;border-radius:var(--radius);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;justify-content:center}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.top-bar{padding:.875rem 1.25rem;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.pt-name{font-size:16px;font-weight:500;color:var(--text-primary)}
+.badges{display:flex;gap:5px;margin-top:3px;flex-wrap:wrap}
+.badge{font-size:11px;padding:2px 7px;border-radius:var(--radius);font-weight:500}
+.b-ok{background:var(--bg-success);color:var(--text-success)}
+.b-ac{background:var(--bg-accent);color:var(--text-accent)}
+.b-wn{background:var(--bg-warning);color:var(--text-warning)}
+.top-actions{display:flex;gap:6px}
+.ai-btn{padding:6px 12px;font-size:12px;background:var(--bg-pro);color:var(--text-pro);border:0.5px solid var(--border-pro);border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;gap:5px;font-weight:500}
+.pdf-btn{padding:6px 12px;font-size:12px;background:var(--surface-2);color:var(--text-secondary);border:0.5px solid var(--border-strong);border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;gap:5px}
+.tabs{display:flex;border-bottom:0.5px solid var(--border);padding:0 1.25rem;gap:1px;flex-shrink:0;overflow-x:auto}
+.tab{padding:9px 12px;font-size:12px;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.tab:hover{color:var(--text-primary)}
+.tab.active{color:var(--text-accent);border-bottom-color:var(--border-accent);font-weight:500}
+.content{flex:1;overflow-y:auto;padding:1rem 1.25rem}
+.sec{display:none}.sec.active{display:block}
+.card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:.875rem}
+.card h3{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:.875rem;display:flex;align-items:center;gap:5px}
+.card h3 i{font-size:15px;color:var(--text-accent)}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+.f{display:flex;flex-direction:column;gap:3px}
+label{font-size:11px;color:var(--text-secondary);font-weight:500}
+input,select,textarea{width:100%;padding:6px 9px;font-size:12px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--surface-1);color:var(--text-primary);outline:none;font-family:var(--font-sans)}
+input:focus,select:focus,textarea:focus{border-color:var(--border-accent)}
+textarea{resize:vertical;min-height:60px}
+.save-bar{padding:.75rem 1.25rem;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;gap:6px;flex-shrink:0}
+.save-btn{padding:6px 14px;font-size:12px;background:var(--fill-accent);color:var(--on-accent);border:none;border-radius:var(--radius);cursor:pointer;font-weight:500}
+.cancel-btn{padding:6px 14px;font-size:12px;background:transparent;color:var(--text-secondary);border:0.5px solid var(--border-strong);border-radius:var(--radius);cursor:pointer}
+.doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.doc-slot{border:1px dashed var(--border-strong);border-radius:10px;padding:1rem;text-align:center;cursor:pointer;position:relative;transition:border-color .15s}
+.doc-slot:hover{border-color:var(--border-accent);background:var(--bg-accent)}
+.doc-slot i{font-size:22px;color:var(--text-muted);display:block;margin-bottom:6px}
+.doc-slot p{font-size:12px;font-weight:500;color:var(--text-secondary)}
+.doc-slot span{font-size:11px;color:var(--text-muted)}
+.doc-slot input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.doc-uploaded{border-style:solid;border-color:var(--border-success);background:var(--bg-success)}
+.doc-uploaded i{color:var(--text-success)}
+.doc-uploaded p{color:var(--text-success)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:.75rem}
+.cal-hdr{font-size:10px;color:var(--text-muted);text-align:center;padding:4px 0;font-weight:500}
+.cal-day{min-height:34px;border-radius:6px;padding:3px;font-size:11px;color:var(--text-secondary);cursor:default;border:0.5px solid transparent;position:relative}
+.cal-day.today{border-color:var(--border-accent);color:var(--text-accent);font-weight:500}
+.cal-day.has-event{background:var(--bg-accent)}
+.cal-day.has-tx{background:var(--bg-success)}
+.cal-day.has-flight{background:var(--bg-warning)}
+.cal-day.has-hotel{background:var(--bg-pro)}
+.cal-dot{width:5px;height:5px;border-radius:50%;display:inline-block;margin:1px}
+.cal-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:.875rem}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+.ev-list{display:flex;flex-direction:column;gap:6px}
+.ev-item{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;background:var(--surface-1);border-radius:var(--radius);border:0.5px solid var(--border)}
+.ev-color{width:3px;border-radius:2px;align-self:stretch;flex-shrink:0}
+.ev-info p{font-size:12px;font-weight:500;color:var(--text-primary)}
+.ev-info span{font-size:11px;color:var(--text-muted)}
+.ai-box{background:var(--surface-2);border:0.5px solid var(--border-pro);border-radius:12px;padding:1rem 1.25rem;margin-bottom:.875rem}
+.ai-box-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.ai-box-hdr h3{font-size:13px;font-weight:500;color:var(--text-pro);display:flex;align-items:center;gap:5px}
+.ai-content{font-size:12px;color:var(--text-secondary);line-height:1.7;min-height:60px}
+.ai-loading{display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:12px}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--fill-pro);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.875rem}
+.stat-c{background:var(--surface-1);border-radius:var(--radius);padding:.625rem .875rem}
+.stat-c p{font-size:11px;color:var(--text-muted);margin-bottom:2px}
+.stat-c span{font-size:18px;font-weight:500;color:var(--text-primary)}
+.tx-item{padding:8px 10px;background:var(--surface-1);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;display:flex;gap:8px;align-items:flex-start}
+.tx-dot{width:7px;height:7px;border-radius:50%;background:var(--fill-accent);margin-top:4px;flex-shrink:0}
+.tx-info p{font-size:12px;font-weight:500;color:var(--text-primary)}
+.tx-info span{font-size:11px;color:var(--text-muted)}
+.flight-route{display:flex;align-items:center;gap:10px;margin-bottom:.75rem}
+.fc{text-align:center}
+.fc p{font-size:15px;font-weight:500;color:var(--text-primary)}
+.fc span{font-size:10px;color:var(--text-muted)}
+.fl{flex:1;height:0.5px;background:var(--border-strong);display:flex;align-items:center;justify-content:center}
+.fl i{background:var(--surface-2);padding:0 3px;font-size:13px;color:var(--text-accent)}
+.prog-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:3px;margin-top:8px}
+.prog-bar{height:3px;background:var(--surface-0);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px}
+</style>
+
+<h2 class="sr-only">Health Tourism Patient Management Panel</h2>
+
+<div class="panel">
+  <div class="sidebar">
+    <div class="sb-top">
+      <h2 id="lb-patients">Patients</h2>
+      <div class="lang-sel">
+        <button class="lang-btn active" onclick="setLang('en',this)">EN</button>
+        <button class="lang-btn" onclick="setLang('de',this)">DE</button>
+        <button class="lang-btn" onclick="setLang('ar',this)">AR</button>
+        <button class="lang-btn" onclick="setLang('tr',this)">TR</button>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <input id="pt-search" placeholder="Search patients..." oninput="filterPatients(this.value)">
+    </div>
+    <div class="patient-list" id="pt-list"></div>
+    <button class="new-btn" onclick="sendPrompt('Add a new health tourism patient')"><i class="ti ti-plus" aria-hidden="true"></i> <span id="lb-new">New Patient</span></button>
+  </div>
+
+  <div class="main">
+    <div class="top-bar">
+      <div>
+        <p class="pt-name" id="pt-name">James Harrington</p>
+        <div class="badges">
+          <span class="badge b-ok" id="lb-active">Active</span>
+          <span class="badge b-ac" id="pt-dept">Orthopaedics</span>
+          <span class="badge b-wn" id="pt-origin">🇬🇧 United Kingdom</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <p style="font-size:11px;color:var(--text-muted)">Patient ID: <strong style="color:var(--text-primary)">#HT-2024-001</strong></p>
+        <div class="top-actions">
+          <button class="ai-btn" onclick="generateAISummary()"><i class="ti ti-sparkles" aria-hidden="true"></i> <span id="lb-ai">AI Summary</span></button>
+          <button class="pdf-btn" onclick="sendPrompt('Generate a PDF summary for patient James Harrington')"><i class="ti ti-file-download" aria-hidden="true"></i> <span id="lb-pdf">Export PDF</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('general',this)"><i class="ti ti-user" aria-hidden="true"></i> <span id="lb-t1">General</span></div>
+      <div class="tab" onclick="showTab('treatment',this)"><i class="ti ti-stethoscope" aria-hidden="true"></i> <span id="lb-t2">Treatment</span></div>
+      <div class="tab" onclick="showTab('flight',this)"><i class="ti ti-plane" aria-hidden="true"></i> <span id="lb-t3">Flights</span></div>
+      <div class="tab" onclick="showTab('hotel',this)"><i class="ti ti-building" aria-hidden="true"></i> <span id="lb-t4">Hotel</span></div>
+      <div class="tab" onclick="showTab('docs',this)"><i class="ti ti-files" aria-hidden="true"></i> <span id="lb-t5">Documents</span></div>
+      <div class="tab" onclick="showTab('calendar',this)"><i class="ti ti-calendar" aria-hidden="true"></i> <span id="lb-t6">Schedule</span></div>
+      <div class="tab" onclick="showTab('notes',this)"><i class="ti ti-notes" aria-hidden="true"></i> <span id="lb-t7">Notes</span></div>
+    </div>
+
+    <div class="content">
+
+      <div class="sec active" id="sec-general">
+        <div id="ai-summary-box" style="display:none" class="ai-box">
+          <div class="ai-box-hdr">
+            <h3><i class="ti ti-sparkles" aria-hidden="true"></i> AI Patient Summary</h3>
+            <button onclick="document.getElementById('ai-summary-box').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1">×</button>
+          </div>
+          <div class="ai-content" id="ai-text"><div class="ai-loading"><div class="spinner"></div> Generating summary...</div></div>
+        </div>
+        <div class="card">
+          <h3><i class="ti ti-user-circle" aria-hidden="true"></i> <span id="lb-personal">Personal Information</span></h3>
+          <div class="fg">
+            <div class="f"><label id="lb-fname">First name</label><input value="James"></div>
+            <div class="f"><label id="lb-lname">Last name</label><input value="Harrington"></div>
+            <div class="f"><label id="lb-dob">Date of birth</label><input type="date" value="1971-09-03"></div>
+            <div class="f"><label id="lb-gender">Gender</label><select><option>Male</option><option>Female</option><option>Prefer not to say</option></select></div>
+            <div class="f"><label id="lb-country">Country</label><input value="United Kingdom"></div>
+            <div class="f"><label id="lb-passport">Passport no.</label><input value="GB-48291033"></div>
+            <div class="f"><label id="lb-lang">Language</label><input value="English"></div>
+            <div class="f"><label id="lb-insurer">Insurance company</label><input value="Bupa International"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="ti ti-phone" aria-hidden="true"></i> <span id="lb-contact">Contact Details</span></h3>
+          <div class="fg">
+            <div class="f"><label>Phone</label><input value="+44 7700 900 123"></div>
+            <div class="f"><label>Email</label><input value="j.harrington@email.co.uk"></div>
+            <div class="f full"><label id="lb-emergency">Emergency contact</label><input value="Margaret Harrington (Wife) · +44 7700 900 456"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec-treatment">
+        <div class="stat-row">
+          <div class="stat-c"><p id="lb-s1">Total treatments</p><span>3</span></div>
+          <div class="stat-c"><p id="lb-s2">Active appointments</p><span>2</span></div>
+          <div class="stat-c"><p id="lb-s3">Next appointment</p><span style="font-size:12px;line-height:1.4">12 Jul 2025</span></div>
+        </div>
+        <div class="card">
+          <h3><i class="ti ti-history" aria-hidden="true"></i> <span id="lb-past">Past treatments</span></h3>
+          <div class="tx-item"><div class="tx-dot"></div><div class="tx-info"><p>Right knee replacement</p><span>Dr. Mehmet Çelik · 14 Jan 2024 · Antalya Private Hospital</span></div></div>
+          <div class="tx-item"><div class="tx-dot" style="background:var(--fill-success)"></div><div class="tx-info"><p>Physiotherapy assessment</p><span>Dr. Ayşe Kaya · 3 Mar 2024 · Rehabilitation Clinic</span></div></div>
+          <div style="height:.75rem"></div>
+          <h3><i class="ti ti-calendar-plus" aria-hidden="true"></i> <span id="lb-plan">Plan new treatment</span></h3>
+          <div class="fg">
+            <div class="f"><label id="lb-txtype">Treatment type</label><select><option>Orthopaedics</option><option>Dentistry</option><option>Plastic surgery</option><option>Ophthalmology</option><option>Cardiology</option><option>Hair transplant</option></select></div>
+            <div class="f"><label id="lb-doctor">Doctor</label><input placeholder="Dr. name"></div>
+            <div class="f"><label id="lb-date">Date</label><input type="date"></div>
+            <div class="f"><label id="lb-clinic">Clinic / Hospital</label><input placeholder="Institution name"></div>
+            <div class="f full"><label id="lb-notes">Notes</label><textarea placeholder="Treatment details, special instructions..."></textarea></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec-flight">
+        <div class="card">
+          <h3><i class="ti ti-plane-arrival" aria-hidden="true"></i> <span id="lb-arr">Arrival flight</span></h3>
+          <div class="flight-route">
+            <div class="fc"><p>LHR</p><span>London Heathrow</span></div>
+            <div class="fl"><i class="ti ti-plane" aria-hidden="true"></i></div>
+            <div class="fc"><p>AYT</p><span>Antalya</span></div>
+          </div>
+          <div class="fg3">
+            <div class="f"><label id="lb-fno">Flight no.</label><input value="TK 1965"></div>
+            <div class="f"><label id="lb-fdate">Date</label><input type="date" value="2024-07-10"></div>
+            <div class="f"><label id="lb-ftime">Time</label><input type="time" value="09:45"></div>
+          </div>
+          <div class="fg" style="margin-top:8px">
+            <div class="f"><label id="lb-transfer">Transfer type</label><select><option>VIP Transfer</option><option>Minibus</option><option>Ambulance</option><option>Taxi</option></select></div>
+            <div class="f"><label id="lb-tnote">Transfer note</label><input placeholder="Special requirements..."></div>
+          </div>
+          <div class="prog-row"><span id="lb-tfstat">Transfer status</span><span style="color:var(--text-accent);font-weight:500" id="lb-booked">Booked</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:50%;background:var(--fill-accent)"></div></div>
+        </div>
+        <div class="card">
+          <h3><i class="ti ti-plane-departure" aria-hidden="true"></i> <span id="lb-dep">Return flight</span></h3>
+          <div class="flight-route">
+            <div class="fc"><p>AYT</p><span>Antalya</span></div>
+            <div class="fl"><i class="ti ti-plane" style="transform:scaleX(-1)" aria-hidden="true"></i></div>
+            <div class="fc"><p>LHR</p><span>London Heathrow</span></div>
+          </div>
+          <div class="fg3">
+            <div class="f"><label>Flight no.</label><input value="TK 1966"></div>
+            <div class="f"><label>Date</label><input type="date" value="2024-07-18"></div>
+            <div class="f"><label>Time</label><input type="time" value="14:20"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec-hotel">
+        <div class="card">
+          <h3><i class="ti ti-building" aria-hidden="true"></i> <span id="lb-hinfo">Hotel information</span></h3>
+          <div class="fg">
+            <div class="f"><label id="lb-hname">Hotel name</label><input value="Rixos Premium Antalya"></div>
+            <div class="f"><label id="lb-room">Room type</label><select><option>Standard</option><option>Deluxe</option><option>Suite</option><option>VIP Suite</option></select></div>
+            <div class="f"><label id="lb-cin">Check-in</label><input type="date" value="2024-07-10"></div>
+            <div class="f"><label id="lb-cout">Check-out</label><input type="date" value="2024-07-18"></div>
+            <div class="f"><label id="lb-resno">Reservation no.</label><input value="RXS-884421"></div>
+            <div class="f"><label id="lb-price">Price</label><input value="£ 1,420"></div>
+            <div class="f full"><label id="lb-spnote">Special requests</label><textarea>Ground floor or lift access required — post knee surgery. Quiet room preferred. No stairs.</textarea></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="ti ti-map-pin" aria-hidden="true"></i> <span id="lb-dist">Hospital → hotel distance</span></h3>
+          <div class="fg">
+            <div class="f"><label id="lb-km">Distance</label><input value="4.2 km"></div>
+            <div class="f"><label id="lb-mins">Travel time</label><input value="12 minutes"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec-docs">
+        <div class="card">
+          <h3><i class="ti ti-files" aria-hidden="true"></i> <span id="lb-upload">Upload documents</span></h3>
+          <div class="doc-grid" id="doc-grid">
+            <div class="doc-slot" id="ds-passport" onclick="triggerUpload('passport')">
+              <input type="file" accept=".pdf,image/*" onchange="markUploaded('passport',this)">
+              <i class="ti ti-passport" aria-hidden="true"></i>
+              <p id="lb-doc-passport">Passport / ID</p>
+              <span id="lb-doc-passport-hint">PDF or image</span>
+            </div>
+            <div class="doc-slot" id="ds-insurance" onclick="triggerUpload('insurance')">
+              <input type="file" accept=".pdf" onchange="markUploaded('insurance',this)">
+              <i class="ti ti-shield-check" aria-hidden="true"></i>
+              <p id="lb-doc-insurance">Insurance policy</p>
+              <span id="lb-doc-insurance-hint">PDF</span>
+            </div>
+            <div class="doc-slot" id="ds-medical" onclick="triggerUpload('medical')">
+              <input type="file" accept=".pdf" onchange="markUploaded('medical',this)">
+              <i class="ti ti-report-medical" aria-hidden="true"></i>
+              <p id="lb-doc-medical">Medical records</p>
+              <span id="lb-doc-medical-hint">Previous reports, scans</span>
+            </div>
+            <div class="doc-slot" id="ds-xray" onclick="triggerUpload('xray')">
+              <input type="file" accept=".pdf,image/*" onchange="markUploaded('xray',this)">
+              <i class="ti ti-bone" aria-hidden="true"></i>
+              <p id="lb-doc-xray">X-ray / MRI</p>
+              <span id="lb-doc-xray-hint">DICOM, JPG, PDF</span>
+            </div>
+            <div class="doc-slot" id="ds-consent" onclick="triggerUpload('consent')">
+              <input type="file" accept=".pdf" onchange="markUploaded('consent',this)">
+              <i class="ti ti-writing" aria-hidden="true"></i>
+              <p id="lb-doc-consent">Consent forms</p>
+              <span id="lb-doc-consent-hint">Signed documents</span>
+            </div>
+            <div class="doc-slot" id="ds-other" onclick="triggerUpload('other')">
+              <input type="file" onchange="markUploaded('other',this)">
+              <i class="ti ti-paperclip" aria-hidden="true"></i>
+              <p id="lb-doc-other">Other</p>
+              <span id="lb-doc-other-hint">Any file type</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="ti ti-clock" aria-hidden="true"></i> <span id="lb-recent">Recent uploads</span></h3>
+          <div style="display:flex;flex-direction:column;gap:6px" id="recent-uploads">
+            <div class="ev-item"><div class="ev-color" style="background:var(--fill-accent)"></div><div class="ev-info"><p>Passport_Harrington.pdf</p><span>Uploaded 2 Jan 2024 · 1.2 MB</span></div></div>
+            <div class="ev-item"><div class="ev-color" style="background:var(--fill-success)"></div><div class="ev-info"><p>Bupa_Policy_2024.pdf</p><span>Uploaded 3 Jan 2024 · 890 KB</span></div></div>
+            <div class="ev-item"><div class="ev-color" style="background:var(--fill-warning)"></div><div class="ev-info"><p>MRI_RightKnee_Dec23.pdf</p><span>Uploaded 5 Jan 2024 · 4.7 MB</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec-calendar">
+        <div class="card">
+          <h3><i class="ti ti-calendar" aria-hidden="true"></i> <span id="lb-sched">July 2024 — Patient Schedule</span></h3>
+          <div class="cal-legend">
+            <div class="leg"><div class="leg-dot" style="background:var(--fill-warning)"></div><span id="leg-flight">Flight</span></div>
+            <div class="leg"><div class="leg-dot" style="background:var(--fill-success)"></div><span id="leg-tx">Treatment</span></div>
+            <div class="leg"><div class="leg-dot" style="background:var(--fill-pro)"></div><span id="leg-hotel">Hotel</span></div>
+            <div class="leg"><div class="leg-dot" style="background:var(--fill-accent)"></div><span id="leg-transfer">Transfer</span></div>
+          </div>
+          <div class="cal-grid" id="cal-hdr-row"></div>
+          <div class="cal-grid" id="cal-days"></div>
+        </div>
+        <div class="card">
+          <h3><i class="ti ti-list" aria-hidden="true"></i> <span id="lb-events">Upcoming events</span></h3>
+          <div class="ev-list">
+            <div class="ev-item"><div class="ev-color" style="background:var(--fill-warning)"></div><div class="ev-info"><p>LHR → AYT · TK 1965</p><span>10 Jul · 09:45 — VIP transfer arranged</span></div></div>
+            <div class="ev-item"><div class="ev-color" style="background:var(--fill-pro)"></div><div class="ev-info"><p>Rixos Premium Antalya — check-in</p><span>10 Jul · Ground floor room confirmed</span></div></div>
+            <div class="ev-item"><div class="ev-color" style="background:var(--fill-success)"></div><div class="ev-info"><p>Pre-op assessment · Dr. Mehmet Çelik</p><span>11 Jul · 10:00 — Antalya Private Hospital</span></div></div>
+            <div class="ev-item"><div class="ev-color" style="background:var(--fill-success)"></div><div class="ev-info"><p>Right knee replacement surgery</p><span>12 Jul · 08:30 — Antalya Private Hospital</span></div></div>
+            <div class="ev-item"><div class="ev-color" style="background:var(--fill-success)"></div><div class="ev-info"><p>Post-op physiotherapy session 1</p><span>15 Jul · 11:00 — Rehabilitation Clinic</span></div></div>
+            <div class="ev-item"><div class="ev-color" style="background:var(--fill-warning)"></div><div class="ev-info"><p>AYT → LHR · TK 1966</p><span>18 Jul · 14:20 — Transfer to airport 11:00</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec-notes">
+        <div class="card">
+          <h3><i class="ti ti-notes" aria-hidden="true"></i> <span id="lb-coordnotes">Coordinator notes</span></h3>
+          <div class="f"><textarea style="min-height:100px">Patient travelled from London Heathrow. Bupa International cover confirmed — pre-authorisation ref BUPA-2024-PRE-88821. Requires ground-floor or lift access post-surgery. Dietary: no restrictions. Language: English only — no interpreter needed.</textarea></div>
+        </div>
+        <div class="card">
+          <h3><i class="ti ti-receipt" aria-hidden="true"></i> <span id="lb-finance">Insurance & payments</span></h3>
+          <div class="fg">
+            <div class="f"><label id="lb-ins">Insurer</label><input value="Bupa International"></div>
+            <div class="f"><label id="lb-polno">Policy no.</label><input value="BUPA-2024-88821"></div>
+            <div class="f"><label id="lb-paystatus">Payment status</label><select><option>Deposit received</option><option>Pending</option><option>Completed</option><option>Insurance claim</option></select></div>
+            <div class="f"><label id="lb-total">Total</label><input value="£ 5,200"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="save-bar">
+      <button class="cancel-btn" id="lb-cancel">Cancel</button>
+      <button class="save-btn" id="lb-save">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const patients=[
+  {name:"James Harrington",dept:"Orthopaedics",origin:"🇬🇧 United Kingdom",no:"#HT-2024-001",av:"JH",avc:"var(--bg-accent)",avt:"var(--text-accent)"},
+  {name:"Emily Watson",dept:"Dentistry",origin:"🇬🇧 United Kingdom",no:"#HT-2024-002",av:"EW",avc:"var(--bg-success)",avt:"var(--text-success)"},
+  {name:"Robert Clarke",dept:"Hair Transplant",origin:"🇬🇧 United Kingdom",no:"#HT-2024-003",av:"RC",avc:"var(--bg-warning)",avt:"var(--text-warning)"},
+  {name:"Sofia Larsen",dept:"Dentistry",origin:"🇩🇰 Denmark",no:"#HT-2024-004",av:"SL",avc:"var(--bg-pro)",avt:"var(--text-pro)"},
+  {name:"Michael Koch",dept:"Plastic Surgery",origin:"🇩🇪 Germany",no:"#HT-2024-005",av:"MK",avc:"var(--bg-danger)",avt:"var(--text-danger)"},
+  {name:"Ahmet Yılmaz",dept:"Orthopaedics",origin:"🇹🇷 Türkiye",no:"#HT-2024-006",av:"AY",avc:"var(--bg-neutral)",avt:"var(--text-secondary)"},
+];
+
+const i18n={
+  en:{patients:"Patients","new":"New Patient",general:"General",treatment:"Treatment",flights:"Flights",hotel:"Hotel",documents:"Documents",schedule:"Schedule",notes:"Notes","ai-sum":"AI Summary","export-pdf":"Export PDF",active:"Active",personal:"Personal Information",contact:"Contact Details",fname:"First name",lname:"Last name",dob:"Date of birth",gender:"Gender",country:"Country",passport:"Passport no.",lang:"Language",insurer:"Insurance company",emergency:"Emergency contact",s1:"Total treatments",s2:"Active appointments",s3:"Next appointment",past:"Past treatments",plan:"Plan new treatment",txtype:"Treatment type",doctor:"Doctor",date:"Date",clinic:"Clinic / Hospital",notes2:"Notes",arr:"Arrival flight",dep:"Return flight",fno:"Flight no.",fdate:"Date",ftime:"Time",transfer:"Transfer type",tnote:"Transfer note",tfstat:"Transfer status",booked:"Booked",hinfo:"Hotel information",hname:"Hotel name",room:"Room type",cin:"Check-in",cout:"Check-out",resno:"Reservation no.",price:"Price",spnote:"Special requests",dist:"Hospital → hotel distance",km:"Distance",mins:"Travel time",upload:"Upload documents",recent:"Recent uploads",sched:"July 2024 — Patient Schedule",events:"Upcoming events",coordnotes:"Coordinator notes",finance:"Insurance & payments",ins:"Insurer",polno:"Policy no.",paystatus:"Payment status",total:"Total",cancel:"Cancel",save:"Save changes","leg-flight":"Flight","leg-tx":"Treatment","leg-hotel":"Hotel","leg-transfer":"Transfer",search:"Search patients..."},
+  de:{patients:"Patienten","new":"Neuer Patient",general:"Allgemein",treatment:"Behandlung",flights:"Flüge",hotel:"Hotel",documents:"Dokumente",schedule:"Zeitplan",notes:"Notizen","ai-sum":"KI-Zusammenfassung","export-pdf":"PDF exportieren",active:"Aktiv",personal:"Persönliche Daten",contact:"Kontakt",fname:"Vorname",lname:"Nachname",dob:"Geburtsdatum",gender:"Geschlecht",country:"Land",passport:"Reisepass-Nr.",lang:"Sprache",insurer:"Versicherung",emergency:"Notfallkontakt",s1:"Behandlungen gesamt",s2:"Aktive Termine",s3:"Nächster Termin",past:"Vergangene Behandlungen",plan:"Neue Behandlung",txtype:"Behandlungsart",doctor:"Arzt",date:"Datum",clinic:"Klinik / Krankenhaus",notes2:"Notizen",arr:"Ankunftsflug",dep:"Rückflug",fno:"Flugnummer",fdate:"Datum",ftime:"Uhrzeit",transfer:"Transferart",tnote:"Transfer-Notiz",tfstat:"Transferstatus",booked:"Gebucht",hinfo:"Hotelinformationen",hname:"Hotelname",room:"Zimmertyp",cin:"Check-in",cout:"Check-out",resno:"Reservierungs-Nr.",price:"Preis",spnote:"Sonderwünsche",dist:"Krankenhaus → Hotel",km:"Entfernung",mins:"Fahrzeit",upload:"Dokumente hochladen",recent:"Letzte Uploads",sched:"Juli 2024 — Patientenplan",events:"Bevorstehende Termine",coordnotes:"Koordinatornotizen",finance:"Versicherung & Zahlung",ins:"Versicherer",polno:"Policen-Nr.",paystatus:"Zahlungsstatus",total:"Gesamt",cancel:"Abbrechen",save:"Speichern","leg-flight":"Flug","leg-tx":"Behandlung","leg-hotel":"Hotel","leg-transfer":"Transfer",search:"Patienten suchen..."},
+  ar:{patients:"المرضى","new":"مريض جديد",general:"عام",treatment:"العلاج",flights:"الرحلات",hotel:"الفندق",documents:"المستندات",schedule:"الجدول",notes:"ملاحظات","ai-sum":"ملخص الذكاء الاصطناعي","export-pdf":"تصدير PDF",active:"نشط",personal:"المعلومات الشخصية",contact:"معلومات الاتصال",fname:"الاسم الأول",lname:"اسم العائلة",dob:"تاريخ الميلاد",gender:"الجنس",country:"الدولة",passport:"رقم الجواز",lang:"اللغة",insurer:"شركة التأمين",emergency:"جهة الطوارئ",s1:"إجمالي العلاجات",s2:"المواعيد النشطة",s3:"الموعد القادم",past:"العلاجات السابقة",plan:"تخطيط علاج جديد",txtype:"نوع العلاج",doctor:"الطبيب",date:"التاريخ",clinic:"العيادة / المستشفى",notes2:"ملاحظات",arr:"رحلة الوصول",dep:"رحلة العودة",fno:"رقم الرحلة",fdate:"التاريخ",ftime:"الوقت",transfer:"نوع النقل",tnote:"ملاحظة النقل",tfstat:"حالة النقل",booked:"محجوز",hinfo:"معلومات الفندق",hname:"اسم الفندق",room:"نوع الغرفة",cin:"تسجيل الدخول",cout:"تسجيل الخروج",resno:"رقم الحجز",price:"السعر",spnote:"طلبات خاصة",dist:"المستشفى ← الفندق",km:"المسافة",mins:"وقت التنقل",upload:"رفع المستندات",recent:"آخر الرفوعات",sched:"يوليو 2024 — جدول المريض",events:"الأحداث القادمة",coordnotes:"ملاحظات المنسق",finance:"التأمين والمدفوعات",ins:"شركة التأمين",polno:"رقم الوثيقة",paystatus:"حالة الدفع",total:"الإجمالي",cancel:"إلغاء",save:"حفظ التغييرات","leg-flight":"رحلة","leg-tx":"علاج","leg-hotel":"فندق","leg-transfer":"نقل",search:"ابحث عن مريض..."},
+  tr:{patients:"Hastalar","new":"Yeni Hasta",general:"Genel",treatment:"Tedavi",flights:"Uçuşlar",hotel:"Konaklama",documents:"Belgeler",schedule:"Takvim",notes:"Notlar","ai-sum":"AI Özeti","export-pdf":"PDF İndir",active:"Aktif",personal:"Kişisel Bilgiler",contact:"İletişim",fname:"Ad",lname:"Soyad",dob:"Doğum tarihi",gender:"Cinsiyet",country:"Ülke",passport:"Pasaport no.",lang:"Dil",insurer:"Sigorta şirketi",emergency:"Acil iletişim",s1:"Toplam tedavi",s2:"Aktif randevu",s3:"Sonraki randevu",past:"Geçmiş tedaviler",plan:"Yeni tedavi planla",txtype:"Tedavi türü",doctor:"Doktor",date:"Tarih",clinic:"Klinik / Hastane",notes2:"Notlar",arr:"Geliş uçuşu",dep:"Dönüş uçuşu",fno:"Uçuş no.",fdate:"Tarih",ftime:"Saat",transfer:"Transfer türü",tnote:"Transfer notu",tfstat:"Transfer durumu",booked:"Planlandı",hinfo:"Konaklama bilgileri",hname:"Otel adı",room:"Oda tipi",cin:"Giriş tarihi",cout:"Çıkış tarihi",resno:"Rezervasyon no.",price:"Ücret",spnote:"Özel istekler",dist:"Hastane → otel mesafesi",km:"Mesafe",mins:"Süre",upload:"Belge yükle",recent:"Son yüklemeler",sched:"Temmuz 2024 — Hasta Takvimi",events:"Yaklaşan etkinlikler",coordnotes:"Koordinatör notları",finance:"Sigorta & Ödeme",ins:"Sigorta şirketi",polno:"Poliçe no.",paystatus:"Ödeme durumu",total:"Toplam",cancel:"İptal",save:"Kaydet","leg-flight":"Uçuş","leg-tx":"Tedavi","leg-hotel":"Otel","leg-transfer":"Transfer",search:"Hasta ara..."}
+};
+
+let curLang='en';
+
+function setLang(lang,btn){
+  curLang=lang;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const t=i18n[lang];
+  const map={
+    'lb-patients':'patients','lb-new':'new','lb-t1':'general','lb-t2':'treatment','lb-t3':'flights','lb-t4':'hotel','lb-t5':'documents','lb-t6':'schedule','lb-t7':'notes',
+    'lb-ai':'ai-sum','lb-pdf':'export-pdf','lb-active':'active','lb-personal':'personal','lb-contact':'contact','lb-fname':'fname','lb-lname':'lname','lb-dob':'dob','lb-gender':'gender','lb-country':'country','lb-passport':'passport','lb-lang':'lang','lb-insurer':'insurer','lb-emergency':'emergency',
+    'lb-s1':'s1','lb-s2':'s2','lb-s3':'s3','lb-past':'past','lb-plan':'plan','lb-txtype':'txtype','lb-doctor':'doctor','lb-date':'date','lb-clinic':'clinic','lb-notes':'notes2',
+    'lb-arr':'arr','lb-dep':'dep','lb-fno':'fno','lb-fdate':'fdate','lb-ftime':'ftime','lb-transfer':'transfer','lb-tnote':'tnote','lb-tfstat':'tfstat','lb-booked':'booked',
+    'lb-hinfo':'hinfo','lb-hname':'hname','lb-room':'room','lb-cin':'cin','lb-cout':'cout','lb-resno':'resno','lb-price':'price','lb-spnote':'spnote','lb-dist':'dist','lb-km':'km','lb-mins':'mins',
+    'lb-upload':'upload','lb-recent':'recent','lb-sched':'sched','lb-events':'events','lb-coordnotes':'coordnotes','lb-finance':'finance','lb-ins':'ins','lb-polno':'polno','lb-paystatus':'paystatus','lb-total':'total',
+    'lb-cancel':'cancel','lb-save':'save','leg-flight':'leg-flight','leg-tx':'leg-tx','leg-hotel':'leg-hotel','leg-transfer':'leg-transfer',
+    'lb-doc-passport':'passport','lb-doc-insurance':'insurer','lb-doc-medical':'s1','lb-doc-xray':'s1','lb-doc-consent':'notes2','lb-doc-other':'notes2'
+  };
+  Object.entries(map).forEach(([id,key])=>{
+    const el=document.getElementById(id);
+    if(el&&t[key])el.textContent=t[key];
+  });
+  document.getElementById('pt-search').placeholder=t.search||'Search...';
+  const isAr=lang==='ar';
+  document.querySelector('.panel').style.direction=isAr?'rtl':'ltr';
+}
+
+function renderPatients(list){
+  const cont=document.getElementById('pt-list');
+  cont.innerHTML='';
+  list.forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.className='pm'+(i===0?' active':'');
+    d.id='pm-'+i;
+    d.innerHTML=`<div class="av" style="background:${p.avc};color:${p.avt}">${p.av}</div><div class="pm-info"><p>${p.name}</p><span>${p.dept} · ${p.origin.slice(2)}</span></div>`;
+    d.onclick=()=>selectPt(i,p);
+    cont.appendChild(d);
+  });
+}
+
+function filterPatients(q){
+  const filtered=patients.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())||p.dept.toLowerCase().includes(q.toLowerCase()));
+  renderPatients(filtered);
+}
+
+function selectPt(i,p){
+  document.querySelectorAll('.pm').forEach(e=>e.classList.remove('active'));
+  const el=document.getElementById('pm-'+i);
+  if(el)el.classList.add('active');
+  document.getElementById('pt-name').textContent=p.name;
+  document.getElementById('pt-dept').textContent=p.dept;
+  document.getElementById('pt-origin').textContent=p.origin;
+}
+
+function showTab(id,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sec-'+id).classList.add('active');
+}
+
+function markUploaded(type,input){
+  if(!input.files.length)return;
+  const slot=document.getElementById('ds-'+type);
+  slot.classList.add('doc-uploaded');
+  const fname=input.files[0].name;
+  slot.querySelector('p').textContent=fname.length>18?fname.slice(0,16)+'...':fname;
+  slot.querySelector('span').textContent='✓ Uploaded';
+  const list=document.getElementById('recent-uploads');
+  const item=document.createElement('div');
+  item.className='ev-item';
+  item.innerHTML=`<div class="ev-color" style="background:var(--fill-accent)"></div><div class="ev-info"><p>${fname}</p><span>Just uploaded · ${(input.files[0].size/1024).toFixed(0)} KB</span></div>`;
+  list.prepend(item);
+}
+
+function buildCalendar(){
+  const days=['Mo','Tu','We','Th','Fr','Sa','Su'];
+  const hdr=document.getElementById('cal-hdr-row');
+  days.forEach(d=>{const el=document.createElement('div');el.className='cal-hdr';el.textContent=d;hdr.appendChild(el);});
+  const grid=document.getElementById('cal-days');
+  const events={10:'has-flight',11:'has-event',12:'has-tx',13:'has-tx',14:'has-hotel',15:'has-tx',16:'has-hotel',17:'has-hotel',18:'has-flight'};
+  const startDay=0;
+  for(let blank=0;blank<startDay;blank++){const b=document.createElement('div');b.className='cal-day';grid.appendChild(b);}
+  for(let d=1;d<=31;d++){
+    const el=document.createElement('div');
+    el.className='cal-day'+(events[d]?' '+events[d]:'');
+    el.innerHTML=`<span style="font-size:10px;font-weight:500">${d}</span>`;
+    grid.appendChild(el);
+  }
+}
+
+async function generateAISummary(){
+  const box=document.getElementById('ai-summary-box');
+  const txt=document.getElementById('ai-text');
+  box.style.display='block';
+  txt.innerHTML='<div class="ai-loading"><div class="spinner"></div> Generating summary...</div>';
+  const name=document.getElementById('pt-name').textContent;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        system:'You are a health tourism coordinator assistant. Generate a concise, professional patient summary in 3-4 short paragraphs. Cover: patient background, treatment plan, travel & accommodation logistics, and any special requirements. Be factual and clinical in tone. Keep it under 120 words.',
+        messages:[{role:'user',content:`Generate a patient coordinator summary for: Name: ${name}, Treatment: Right knee replacement at Antalya Private Hospital, Travel: London Heathrow to Antalya, 10-18 July 2024, Hotel: Rixos Premium Antalya (ground floor access required post-surgery), Insurance: Bupa International, Language: English. Special needs: mobility assistance post-surgery, quiet room.`}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content&&data.content[0]?data.content[0].text:'Could not generate summary.';
+    txt.innerHTML='<p style="font-size:12px;color:var(--text-secondary);line-height:1.7">'+text.replace(/\n\n/g,'</p><p style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin-top:6px">')+'</p>';
+  }catch(e){
+    txt.innerHTML='<p style="font-size:12px;color:var(--text-danger)">Error generating summary. Please try again.</p>';
+  }
+}
+
+renderPatients(patients);
+buildCalendar();
+</script>
