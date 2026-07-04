@@ -1,57 +1,49 @@
 # Atölye Defteri
 
-Yedek parça tedarik işi için basit, tek dosyalık bir kayıt paneli. İşleri, tedarikçileri, tamircileri ve parça stoğunu takip etmek için kullanılır. Sunucu, veritabanı veya kurulum gerektirmez — tek bir `index.html` dosyasıdır.
+Opel yedek parça / motor parça tedarik işini kayıt altına almak için basit, tek dosyalık bir web paneli. Kurulum gerektirmez — tek bir `index.html` dosyası, tarayıcıda direkt çalışır.
 
 ## Özellikler
+- **Panel:** toplam iş, bekleyen iş, toplam kâr, az kalan stok, toplam stok değeri, potansiyel kâr, en aktif tedarikçi
+- **İşler:** tamirciye giden iş kayıtları (araç/motor, aranan parça, tedarikçi, maliyet/satış, kâr)
+- **Parça Stok:**
+  - Parça adı, parça numarası, kategori, adet, min. uyarı seviyesi, alış/satış fiyatı
+  - Arama, kategoriye göre filtreleme, sıralama (ada/stoğa/değere göre), "sadece az stoklu" filtresi
+  - Her parça için stok hareket geçmişi (giriş/çıkış/düzenleme kaydı)
+  - **Excel'e Aktar:** tüm listeyi tek tıkla `.xlsx` olarak indirin
+  - **Excel'den İçe Aktar:** dışa aktardığınız formatta bir dosyayı geri yükleyip toplu güncelleme/ekleme yapın
+  - **Yazdır:** filtrelenmiş listeyi yazdırılabilir rapor olarak açar
+- **Tedarikçiler** ve **Tamirciler** listesi
 
-- **Panel** — toplam iş, bekleyen iş, toplam kâr ve az kalan stok özetleri
-- **İşler** — tamirciye yönlendirilen parça talepleri, maliyet/satış/kâr takibi
-- **Parça Stok** — parça adı, parça numarası, stok adedi, min. uyarı seviyesi, hızlı +1/−1 güncelleme
-- **Tedarikçiler** ve **Tamirciler** — iletişim bilgileri ve notlar
+Veriler tarayıcının kendi hafızasında (`localStorage`) saklanır — kurulum, veritabanı ya da internet bağlantısı gerekmez.
 
-## Veri nasıl saklanıyor?
+> **Not:** Veriler sadece kullandığınız tarayıcı + cihazda saklanır. Farklı bir bilgisayar veya tarayıcıdan açarsanız kayıtları göremezsiniz. Tarayıcı geçmişini/verilerini temizlerseniz kayıtlar da silinir.
 
-Tüm veriler tarayıcınızın **localStorage**'ında saklanır — yani veriler yalnızca kaydettiğiniz cihaz + tarayıcıda kalır, hiçbir sunucuya gönderilmez. Bu şu anlama gelir:
+## GitHub'a Yükleme (import)
 
-- Farklı bir cihazdan açtığınızda veriler görünmez (senkronize olmaz).
-- Tarayıcı geçmişini/verilerini temizlerseniz kayıtlar silinir.
-- Ciddi kullanım için düzenli olarak yedek almanız önerilir (ileride bir "dışa aktar" özelliği eklenebilir).
+### Yöntem 1 — Tarayıcıdan, komut satırı olmadan
+1. [github.com/new](https://github.com/new) adresinden yeni bir repo oluşturun (örn. `atolye-defteri`).
+2. Repo sayfasında **"uploading an existing file"** linkine tıklayın.
+3. Bu klasördeki `index.html` ve `README.md` dosyalarını sürükleyip bırakın.
+4. **Commit changes** ile onaylayın.
 
-## Kurulum / Kullanım
-
-### 1) Doğrudan aç
-`index.html` dosyasını herhangi bir tarayıcıda çift tıklayarak açabilirsiniz. İnternet bağlantısı sadece font yüklemek için gerekir (Google Fonts); olmasa da panel çalışır, sadece yazı tipi tarayıcı varsayılanına döner.
-
-### 2) GitHub Pages ile yayınla (ücretsiz, herkese açık link)
-1. Bu klasörü GitHub'da yeni bir repoya yükleyin (aşağıya bakın).
-2. Repo ayarlarında **Settings → Pages** yolunu izleyin.
-3. **Branch: main**, **Folder: / (root)** seçip kaydedin.
-4. Birkaç dakika içinde `https://KULLANICI_ADINIZ.github.io/REPO_ADI/` adresinden erişilebilir olur.
-
-## GitHub'a yükleme
-
-Yerel bilgisayarınızda bu klasörün içindeyken:
-
+### Yöntem 2 — Git ile (bilgisayarınızda git kuruluysa)
 ```bash
+cd atolye-defteri
 git init
 git add .
 git commit -m "İlk sürüm: Atölye Defteri"
 git branch -M main
-git remote add origin https://github.com/KULLANICI_ADINIZ/REPO_ADI.git
+git remote add origin https://github.com/KULLANICI_ADINIZ/atolye-defteri.git
 git push -u origin main
 ```
 
-Ya da GitHub web arayüzünden "Upload files" ile bu dosyaları sürükleyip bırakabilirsiniz — komut satırı gerekmez.
+## Ücretsiz Yayınlama (GitHub Pages)
+Dosyayı internetten herkese açık bir linkle paylaşmak isterseniz:
+1. GitHub'da repo sayfasında **Settings > Pages** bölümüne gidin.
+2. **Source** olarak `main` branch'i ve `/ (root)` klasörünü seçin, **Save**'e basın.
+3. Birkaç dakika içinde siteniz `https://KULLANICI_ADINIZ.github.io/atolye-defteri/` adresinde yayında olur.
 
-## Dosya yapısı
+Dosya adı `index.html` olduğu için GitHub Pages otomatik olarak ana sayfa olarak tanır, ekstra ayara gerek yok.
 
-```
-atolye-defteri/
-├── index.html      # Tüm uygulama (HTML + CSS + JS tek dosyada)
-├── README.md        # Bu dosya
-└── .gitignore
-```
-
-## Geliştirme notları
-
-Bağımlılık yok, build adımı yok. `index.html` içinde düzenleme yapıp tarayıcıda yenilemeniz yeterli. Veri modeli `localStorage` anahtarları üzerinden basit JSON dizileridir: `atolye-defteri:suppliers`, `atolye-defteri:mechanics`, `atolye-defteri:jobs`, `atolye-defteri:stock`.
+## Yerelde Çalıştırma
+İnternete koymadan sadece kendi bilgisayarınızda kullanmak isterseniz `index.html` dosyasına çift tıklamanız yeterli — tarayıcıda direkt açılır.

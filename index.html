@@ -2,11 +2,10 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Yedek parça tedarik, stok ve iş takibi için basit tek dosyalık kayıt paneli.">
 <title>Atölye Defteri</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --bg:#eef1ef;
@@ -200,6 +199,36 @@
 
   select option{background:var(--bg-card-2);}
 
+  /* TOOLBAR */
+  .toolbar{
+    display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;
+    padding:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(30,35,32,.05);
+  }
+  .toolbar .field{flex:1;min-width:130px;margin-bottom:0;}
+  .toolbar .field.grow{flex:2;min-width:180px;}
+  .checkbox-field{display:flex;align-items:center;gap:6px;padding-bottom:9px;white-space:nowrap;}
+  .checkbox-field input{width:auto;}
+  .checkbox-field label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin:0;}
+  .toolbar-actions{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;}
+  input[type="file"].hidden-file{display:none;}
+
+  .tag.category{background:var(--bg-card-2);color:var(--text-dim);border:1px solid var(--line);}
+  .tag.value{background:var(--success-soft);color:var(--success);}
+
+  .hist-toggle{
+    background:none;border:none;color:var(--accent-2);font-family:'IBM Plex Mono',monospace;
+    font-size:11px;text-decoration:underline;cursor:pointer;padding:0;margin-top:6px;
+  }
+  .hist-log{
+    margin-top:8px;padding:8px 10px;background:var(--bg-card-2);border-radius:5px;
+    border:1px solid var(--line-soft);font-size:11px;color:var(--text-dim);
+  }
+  .hist-log div{padding:2px 0;}
+  .hist-log span{color:var(--text-faint);}
+
+  .result-count{font-size:11px;color:var(--text-faint);margin-bottom:8px;}
+
   @media (max-width:520px){
     h1{font-size:18px;}
     .stat-value{font-size:21px;}
@@ -297,6 +326,20 @@
       <div class="form-grid">
         <div class="field"><label>Parça Adı</label><input type="text" id="stkName" placeholder="Örn: Yağ filtresi"></div>
         <div class="field"><label>Parça Numarası</label><input type="text" id="stkPartNo" placeholder="Örn: 93186554"></div>
+        <div class="field">
+          <label>Kategori</label>
+          <input type="text" id="stkCategory" list="categoryList" placeholder="Örn: Filtre">
+          <datalist id="categoryList">
+            <option value="Filtre">
+            <option value="Fren">
+            <option value="Motor">
+            <option value="Elektrik">
+            <option value="Süspansiyon">
+            <option value="Şanzıman">
+            <option value="Soğutma">
+            <option value="Kayış/Rulman">
+          </datalist>
+        </div>
         <div class="field"><label>Stok Adedi</label><input type="number" id="stkQty" placeholder="0" min="0" step="1"></div>
         <div class="field"><label>Min. Uyarı Seviyesi</label><input type="number" id="stkMinQty" placeholder="Örn: 2" min="0" step="1"></div>
         <div class="field"><label>Alış Fiyatı (₺)</label><input type="number" id="stkBuyPrice" placeholder="0" min="0" step="0.01"></div>
@@ -313,6 +356,38 @@
       </div>
     </div>
     <div class="section-title">Stok Listesi</div>
+
+    <div class="toolbar">
+      <div class="field grow">
+        <label>Ara</label>
+        <input type="text" id="stkSearch" placeholder="Parça adı veya parça no...">
+      </div>
+      <div class="field">
+        <label>Kategori</label>
+        <select id="stkCategoryFilter"><option value="">Tümü</option></select>
+      </div>
+      <div class="field">
+        <label>Sırala</label>
+        <select id="stkSort">
+          <option value="name">Ada göre (A-Z)</option>
+          <option value="qty-asc">Stok (az → çok)</option>
+          <option value="qty-desc">Stok (çok → az)</option>
+          <option value="value-desc">Stok değeri (yüksek → düşük)</option>
+        </select>
+      </div>
+      <div class="checkbox-field">
+        <input type="checkbox" id="stkOnlyLow">
+        <label for="stkOnlyLow">Sadece az stoklu</label>
+      </div>
+      <div class="toolbar-actions">
+        <button class="btn secondary small" id="stkPrintBtn">Yazdır</button>
+        <button class="btn secondary small" id="stkImportBtn">Excel'den İçe Aktar</button>
+        <input type="file" id="stkImportFile" class="hidden-file" accept=".xlsx,.xls,.csv">
+        <button class="btn small" id="stkExportBtn">Excel'e Aktar</button>
+      </div>
+    </div>
+
+    <div class="result-count" id="stockResultCount"></div>
     <div class="list" id="stockList"></div>
   </section>
 
@@ -383,11 +458,13 @@
     el.className = 'save-status'+(cls?(' '+cls):'');
   }
 
-  const STORAGE_PREFIX = 'atolye-defteri:';
-
+  // Bu sürüm tarayıcının kendi hafızasını (localStorage) kullanır, böylece
+  // GitHub Pages'te veya bilgisayarınızda dosyayı doğrudan açtığınızda da
+  // kayıtlar kalıcı olur. Veriler sadece kullandığınız tarayıcıda saklanır;
+  // başka bir cihaz/tarayıcıdan açarsanız görünmez.
   async function storageGet(key){
     try{
-      const raw = localStorage.getItem(STORAGE_PREFIX+key);
+      const raw = localStorage.getItem('atolyeDefteri_'+key);
       return raw ? JSON.parse(raw) : [];
     }catch(e){
       return [];
@@ -395,10 +472,10 @@
   }
   async function storageSet(key, value){
     try{
-      localStorage.setItem(STORAGE_PREFIX+key, JSON.stringify(value));
+      localStorage.setItem('atolyeDefteri_'+key, JSON.stringify(value));
       setSaveStatus('✓ Kaydedildi (bu tarayıcıda)', 'ok');
     }catch(e){
-      setSaveStatus('✗ Kaydetme hatası — tarayıcı depolaması dolu/kapalı olabilir', 'err');
+      setSaveStatus('✗ Kaydetme hatası — tekrar deneyin', 'err');
     }
   }
 
@@ -441,6 +518,8 @@
     const doneJobs = jobs.filter(j=>j.status==='done');
     const totalProfit = doneJobs.reduce((s,j)=> s + (Number(j.price||0) - Number(j.cost||0)), 0);
     const lowStockCount = stock.filter(s=> Number(s.qty||0) <= Number(s.minQty||0)).length;
+    const totalStockValue = stock.reduce((sum,s)=> sum + Number(s.qty||0)*Number(s.buyPrice||0), 0);
+    const potentialProfit = stock.reduce((sum,s)=> sum + Number(s.qty||0)*(Number(s.sellPrice||0)-Number(s.buyPrice||0)), 0);
 
     const supCounts = {};
     jobs.forEach(j=>{ if(j.supplierId) supCounts[j.supplierId] = (supCounts[j.supplierId]||0)+1; });
@@ -455,6 +534,8 @@
       <div class="stat-card"><div class="stat-label">Bekleyen İş</div><div class="stat-value">${waitingJobs}</div></div>
       <div class="stat-card"><div class="stat-label">Toplam Kâr</div><div class="stat-value money">${fmtMoney(totalProfit)}</div></div>
       <div class="stat-card${lowStockCount>0?' warn':''}"><div class="stat-label">Stokta Az Kalan</div><div class="stat-value${lowStockCount>0?' warn':''}">${lowStockCount}</div></div>
+      <div class="stat-card"><div class="stat-label">Toplam Stok Değeri</div><div class="stat-value money">${fmtMoney(totalStockValue)}</div></div>
+      <div class="stat-card"><div class="stat-label">Potansiyel Kâr (Stok)</div><div class="stat-value money">${fmtMoney(potentialProfit)}</div></div>
       <div class="stat-card"><div class="stat-label">En Aktif Tedarikçi</div><div class="stat-value" style="font-size:16px;">${topSupplierName}</div></div>
     `;
 
@@ -642,27 +723,83 @@
   };
 
   /* ---------- STOCK ---------- */
+  let expandedHistoryId = null;
+  const today = () => new Date().toISOString().slice(0,10);
+
+  function addHistory(item, type, qtyChange){
+    if(!item.history) item.history = [];
+    item.history.unshift({ date: today(), type, qty: qtyChange });
+    if(item.history.length > 20) item.history = item.history.slice(0,20);
+    return item;
+  }
+
   function renderStockSelects(){
     const sel = $('stkSupplier');
     const cur = sel.value;
     sel.innerHTML = '<option value="">— Seç —</option>' + suppliers.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
     sel.value = cur;
+
+    const catSel = $('stkCategoryFilter');
+    const curCat = catSel.value;
+    const cats = [...new Set(stock.map(s=>s.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+    catSel.innerHTML = '<option value="">Tümü</option>' + cats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    catSel.value = curCat;
+  }
+
+  function getFilteredSortedStock(){
+    const q = ($('stkSearch').value||'').trim().toLowerCase();
+    const cat = $('stkCategoryFilter').value;
+    const onlyLow = $('stkOnlyLow').checked;
+    const sortMode = $('stkSort').value;
+
+    let list = stock.filter(s=>{
+      if(q){
+        const hay = ((s.name||'')+' '+(s.partNo||'')).toLowerCase();
+        if(!hay.includes(q)) return false;
+      }
+      if(cat && s.category !== cat) return false;
+      if(onlyLow && !(Number(s.qty||0) <= Number(s.minQty||0))) return false;
+      return true;
+    });
+
+    list.sort((a,b)=>{
+      if(sortMode==='qty-asc') return Number(a.qty||0)-Number(b.qty||0);
+      if(sortMode==='qty-desc') return Number(b.qty||0)-Number(a.qty||0);
+      if(sortMode==='value-desc') return (Number(b.qty||0)*Number(b.buyPrice||0)) - (Number(a.qty||0)*Number(a.buyPrice||0));
+      return (a.name||'').localeCompare(b.name||'','tr');
+    });
+    return list;
   }
 
   function renderStock(){
+    renderStockSelects();
+    const list = getFilteredSortedStock();
+    $('stockResultCount').textContent = `${list.length} / ${stock.length} parça gösteriliyor`;
+
     if(stock.length===0){
       $('stockList').innerHTML = `<div class="empty">Henüz stok kalemi eklenmedi.</div>`;
       return;
     }
-    const sorted = [...stock].sort((a,b)=> (a.name||'').localeCompare(b.name||'', 'tr'));
-    $('stockList').innerHTML = sorted.map(s=>{
+    if(list.length===0){
+      $('stockList').innerHTML = `<div class="empty">Filtreye uyan parça bulunamadı.</div>`;
+      return;
+    }
+    $('stockList').innerHTML = list.map(s=>{
       const qty = Number(s.qty||0);
       const minQty = Number(s.minQty||0);
       const low = qty <= minQty;
       const sup = suppliers.find(x=>x.id===s.supplierId);
+      const stockValue = qty * Number(s.buyPrice||0);
+      const showHist = expandedHistoryId === s.id;
+      const histItems = (s.history||[]).slice(0,8);
       return `<div class="row-card${low?' low-stock':''}">
         <div class="row-main">
-          <div class="row-title">${escapeHtml(s.name)} ${low?'<span class="tag danger">Az Stok</span>':''}</div>
+          <div class="row-title">
+            ${escapeHtml(s.name)}
+            ${s.category?`<span class="tag category">${escapeHtml(s.category)}</span>`:''}
+            <span class="tag value">Değer: ₺${fmtMoney(stockValue)}</span>
+            ${low?'<span class="tag danger">Az Stok</span>':''}
+          </div>
           <div class="row-sub">
             <span>Parça No:</span> ${escapeHtml(s.partNo||'—')} &nbsp;·&nbsp;
             <span>Stok:</span> ${qty} adet (min. ${minQty}) &nbsp;·&nbsp;
@@ -671,6 +808,8 @@
             ${sup?` &nbsp;·&nbsp; <span>Tedarikçi:</span> ${escapeHtml(sup.name)}`:''}
             ${s.note?`<br><span>Not:</span> ${escapeHtml(s.note)}`:''}
           </div>
+          <button class="hist-toggle" onclick="AD_toggleHistory('${s.id}')">${showHist?'Geçmişi gizle':'Stok geçmişini göster'}</button>
+          ${showHist?`<div class="hist-log">${histItems.length? histItems.map(h=>`<div><span>${h.date}</span> — ${escapeHtml(h.type)}${h.qty?` (${h.qty>0?'+':''}${h.qty})`:''}</div>`).join('') : '<div><span>Kayıt yok</span></div>'}</div>`:''}
         </div>
         <div class="row-actions">
           <button class="btn secondary small" onclick="AD_stockAdjust('${s.id}', -1)">−1</button>
@@ -682,23 +821,43 @@
     }).join('');
   }
 
+  ['stkSearch','stkCategoryFilter','stkSort'].forEach(id=>{
+    $(id).addEventListener('input', renderStock);
+    $(id).addEventListener('change', renderStock);
+  });
+  $('stkOnlyLow').addEventListener('change', renderStock);
+
+  window.AD_toggleHistory = function(id){
+    expandedHistoryId = (expandedHistoryId === id) ? null : id;
+    renderStock();
+  };
+
   $('stkSubmitBtn').addEventListener('click', async ()=>{
     const name = $('stkName').value.trim();
     if(!name){ $('stkName').focus(); return; }
-    const data = {
+    const newQty = parseInt($('stkQty').value)||0;
+    let data = {
       id: editingStkId || uid(),
       name,
       partNo: $('stkPartNo').value.trim(),
-      qty: parseInt($('stkQty').value)||0,
+      category: $('stkCategory').value.trim(),
+      qty: newQty,
       minQty: parseInt($('stkMinQty').value)||0,
       buyPrice: parseFloat($('stkBuyPrice').value)||0,
       sellPrice: parseFloat($('stkSellPrice').value)||0,
       supplierId: $('stkSupplier').value,
-      note: $('stkNote').value.trim()
+      note: $('stkNote').value.trim(),
+      history: []
     };
     if(editingStkId){
+      const old = stock.find(s=>s.id===editingStkId);
+      data.history = old ? (old.history||[]) : [];
+      const diff = newQty - Number(old?old.qty:0);
+      if(diff !== 0) addHistory(data, 'Manuel düzenleme', diff);
+      else addHistory(data, 'Bilgiler güncellendi', 0);
       stock = stock.map(s=> s.id===editingStkId ? data : s);
     } else {
+      addHistory(data, 'Stok eklendi', newQty);
       stock.push(data);
     }
     await storageSet('stock', stock);
@@ -711,7 +870,7 @@
 
   function resetStkForm(){
     editingStkId = null;
-    ['stkName','stkPartNo','stkQty','stkMinQty','stkBuyPrice','stkSellPrice','stkNote'].forEach(id=> $(id).value='');
+    ['stkName','stkPartNo','stkCategory','stkQty','stkMinQty','stkBuyPrice','stkSellPrice','stkNote'].forEach(id=> $(id).value='');
     $('stkSupplier').value = '';
     $('stkSubmitBtn').textContent = 'Stok Ekle';
     $('stkCancelBtn').style.display = 'none';
@@ -723,6 +882,7 @@
     editingStkId = id;
     $('stkName').value = s.name;
     $('stkPartNo').value = s.partNo||'';
+    $('stkCategory').value = s.category||'';
     $('stkQty').value = s.qty||0;
     $('stkMinQty').value = s.minQty||0;
     $('stkBuyPrice').value = s.buyPrice||'';
@@ -744,11 +904,147 @@
   };
 
   window.AD_stockAdjust = async function(id, delta){
-    stock = stock.map(s=> s.id===id ? {...s, qty: Math.max(0, Number(s.qty||0)+delta)} : s);
+    stock = stock.map(s=>{
+      if(s.id!==id) return s;
+      const updated = {...s, qty: Math.max(0, Number(s.qty||0)+delta), history: [...(s.history||[])]};
+      addHistory(updated, delta>0?'Stok girişi':'Stok çıkışı', delta);
+      return updated;
+    });
     await storageSet('stock', stock);
     renderStock();
     renderDashboard();
   };
+
+  /* ---- Excel'e Aktar ---- */
+  $('stkExportBtn').addEventListener('click', ()=>{
+    const rows = stock.map(s=>{
+      const sup = suppliers.find(x=>x.id===s.supplierId);
+      return {
+        'Parça Adı': s.name||'',
+        'Parça Numarası': s.partNo||'',
+        'Kategori': s.category||'',
+        'Stok Adedi': Number(s.qty||0),
+        'Min. Seviye': Number(s.minQty||0),
+        'Alış Fiyatı': Number(s.buyPrice||0),
+        'Satış Fiyatı': Number(s.sellPrice||0),
+        'Kâr Marjı': Number(s.sellPrice||0) - Number(s.buyPrice||0),
+        'Stok Değeri': Number(s.qty||0) * Number(s.buyPrice||0),
+        'Tedarikçi': sup ? sup.name : '',
+        'Not': s.note||''
+      };
+    });
+    if(rows.length===0){ alert('Aktarılacak stok kaydı yok.'); return; }
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:26},{wch:16},{wch:14},{wch:11},{wch:11},{wch:12},{wch:12},{wch:11},{wch:13},{wch:20},{wch:24}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Parça Stok');
+    XLSX.writeFile(wb, `parca-stok-listesi-${today()}.xlsx`);
+  });
+
+  /* ---- Excel'den İçe Aktar ---- */
+  $('stkImportBtn').addEventListener('click', ()=> $('stkImportFile').click());
+  $('stkImportFile').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt)=>{
+      try{
+        const wb = XLSX.read(evt.target.result, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+        if(rows.length===0){ alert('Dosyada okunacak satır bulunamadı.'); return; }
+
+        const norm = (obj, keys) => {
+          for(const k of keys){
+            for(const rk of Object.keys(obj)){
+              if(rk.trim().toLowerCase() === k.toLowerCase()) return obj[rk];
+            }
+          }
+          return '';
+        };
+
+        let added = 0, updated = 0;
+        rows.forEach(r=>{
+          const name = String(norm(r,['Parça Adı','Parça Adi','Ad','İsim'])||'').trim();
+          if(!name) return;
+          const partNo = String(norm(r,['Parça Numarası','Parça No','Parça Numarasi'])||'').trim();
+          const qty = parseInt(norm(r,['Stok Adedi','Stok','Adet']))||0;
+          const existing = partNo ? stock.find(s=> s.partNo && s.partNo===partNo) : null;
+          if(existing){
+            existing.qty = qty;
+            existing.category = String(norm(r,['Kategori'])||existing.category||'').trim();
+            existing.minQty = parseInt(norm(r,['Min. Seviye','Min Seviye','Min']))||existing.minQty||0;
+            existing.buyPrice = parseFloat(norm(r,['Alış Fiyatı','Alış Fiyati']))||existing.buyPrice||0;
+            existing.sellPrice = parseFloat(norm(r,['Satış Fiyatı','Satış Fiyati']))||existing.sellPrice||0;
+            existing.note = String(norm(r,['Not'])||existing.note||'').trim();
+            addHistory(existing, 'Excel ile güncellendi', 0);
+            updated++;
+          } else {
+            const item = {
+              id: uid(),
+              name,
+              partNo,
+              category: String(norm(r,['Kategori'])||'').trim(),
+              qty,
+              minQty: parseInt(norm(r,['Min. Seviye','Min Seviye','Min']))||0,
+              buyPrice: parseFloat(norm(r,['Alış Fiyatı','Alış Fiyati']))||0,
+              sellPrice: parseFloat(norm(r,['Satış Fiyatı','Satış Fiyati']))||0,
+              supplierId: '',
+              note: String(norm(r,['Not'])||'').trim(),
+              history: []
+            };
+            addHistory(item, 'Excel ile içe aktarıldı', qty);
+            stock.push(item);
+            added++;
+          }
+        });
+
+        await storageSet('stock', stock);
+        renderStock();
+        renderDashboard();
+        alert(`İçe aktarma tamamlandı: ${added} yeni parça eklendi, ${updated} parça güncellendi.`);
+      }catch(err){
+        alert('Dosya okunamadı. Lütfen "Excel\'e Aktar" ile indirdiğiniz formatta bir dosya kullanın.');
+      }
+      e.target.value = '';
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  /* ---- Yazdır ---- */
+  $('stkPrintBtn').addEventListener('click', ()=>{
+    const list = getFilteredSortedStock();
+    const rowsHtml = list.map(s=>{
+      const sup = suppliers.find(x=>x.id===s.supplierId);
+      return `<tr>
+        <td>${escapeHtml(s.name)}</td>
+        <td>${escapeHtml(s.partNo||'—')}</td>
+        <td>${escapeHtml(s.category||'—')}</td>
+        <td style="text-align:right;">${Number(s.qty||0)}</td>
+        <td style="text-align:right;">₺${fmtMoney(s.buyPrice)}</td>
+        <td style="text-align:right;">₺${fmtMoney(s.sellPrice)}</td>
+        <td>${sup?escapeHtml(sup.name):'—'}</td>
+      </tr>`;
+    }).join('');
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <html><head><title>Parça Stok Listesi</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:20px;color:#222;}
+        h1{font-size:18px;}
+        table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px;}
+        th,td{border:1px solid #ccc;padding:6px 8px;text-align:left;}
+        th{background:#f0f0f0;}
+      </style></head><body>
+      <h1>Parça Stok Listesi — ${today()}</h1>
+      <table><thead><tr><th>Parça Adı</th><th>Parça No</th><th>Kategori</th><th>Stok</th><th>Alış</th><th>Satış</th><th>Tedarikçi</th></tr></thead>
+      <tbody>${rowsHtml}</tbody></table>
+      </body></html>
+    `);
+    win.document.close();
+    win.focus();
+    win.print();
+  });
 
   /* ---------- JOBS ---------- */
   function renderJobSelects(){
